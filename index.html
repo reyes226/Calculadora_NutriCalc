@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Calculadora Nutricional XML</title>
+</head>
+<body>
+    <h1>Mi Calculadora Nutricional</h1>
+    <div id="resultado">Cargando datos...</div>
+
+    <script>
+        // Este script lee tu archivo datos.xml y lo procesa
+        fetch('recetas.xml')
+            .then(response => response.text())
+            .then(data => {
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(data, "application/xml");
+                // Aquí va tu lógica para calcular calorías, etc.
+                document.getElementById('resultado').innerHTML = "Datos cargados correctamente.";
+            });
+    </script>
+</body>
+</html>
