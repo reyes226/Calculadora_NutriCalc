@@ -1,22 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Calculadora Nutricional XML</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Nutricional</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        #contenedor-calculadora { border: 1px solid #ccc; padding: 20px; border-radius: 8px; }
+        .error { color: red; font-weight: bold; }
+    </style>
 </head>
 <body>
-    <h1>Mi Calculadora Nutricional</h1>
-    <div id="resultado">Cargando datos...</div>
+    <h1>Calculadora Nutricional</h1>
+    <div id="contenedor-calculadora">
+        <p>Cargando recetas y estilos...</p>
+    </div>
 
     <script>
-        // Este script lee tu archivo datos.xml y lo procesa
-        fetch('recetas.xml')
-            .then(response => response.text())
-            .then(data => {
+        async function cargarCalculadora() {
+            const contenedor = document.getElementById("contenedor-calculadora");
+            try {
+                // 1. Cargar archivos XML y XSLT
+                const [xmlResponse, xslResponse] = await Promise.all([
+                    fetch('recetas.xml'),
+                    fetch('estilo.xsl')
+                ]);
+
+                if (!xmlResponse.ok || !xslResponse.ok) throw new Error("No se pudo cargar recetas.xml o estilo.xsl");
+
+                const xmlText = await xmlResponse.text();
+                const xslText = await xslResponse.text();
+
+                // 2. Parsear los textos a objetos DOM
                 const parser = new DOMParser();
-                const xml = parser.parseFromString(data, "application/xml");
-                // Aquí va tu lógica para calcular calorías, etc.
-                document.getElementById('resultado').innerHTML = "Datos cargados correctamente.";
-            });
+                const xml = parser.parseFromString(xmlText, "application/xml");
+                const xsl = parser.parseFromString(xslText, "application/xml");
+
+                // 3. Realizar la transformación XSLT
+                if (window.XSLTProcessor) {
+                    const xsltProcessor = new XSLTProcessor();
+                    xsltProcessor.importStylesheet(xsl);
+                    const resultDocument = xsltProcessor.transformToFragment(xml, document);
+                    
+                    contenedor.innerHTML = ""; // Limpiar mensaje de carga
+                    contenedor.appendChild(resultDocument);
+                } else {
+                    throw new Error("Tu navegador no soporta transformaciones XSLT.");
+                }
+            } catch (error) {
+                contenedor.innerHTML = `<p class="error">Error: ${error.message}. Asegúrate de que los archivos recetas.xml y estilo.xsl estén en la raíz.</p>`;
+                console.error(error);
+            }
+        }
+
+        // Iniciar la carga al abrir la página
+        window.onload = cargarCalculadora;
     </script>
 </body>
 </html>
